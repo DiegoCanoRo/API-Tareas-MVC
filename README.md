@@ -51,12 +51,26 @@ PATCH /api/tareas/:id
 DELETE /api/tareas/:id
 
 
-
+## Obtener todas
 ![Obtener todas](./screenshots/getall.png)
+
+## Obtener por título
 ![Obtener por título](./screenshots/titulo.png)
+
+## Obtener por ID
 ![Obtener por ID](./screenshots/getid.png)
+
+## Crear tarea
 ![Crear tarea](./screenshots/creartarea.png)
+
+## Actualizar tarea
 ![Actualizar tarea](./screenshots/actualizarTarea.png)
+
+## Actualizar tarea parcialmente
 ![Actualizar tarea parcialmente](./screenshots/actualizarTarea.png)
+
+## Eliminar tarea
 ![Eliminar tarea](./screenshots/eliminarTarea.png)
+
+## Obtener en formato de texto
 ![Obtener en formato de texto](./screenshots/formatoText.png)
