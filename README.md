@@ -30,7 +30,7 @@ JWT_SECRET=tu_firma_secreta_jwt
 JWT_EXPIRES_IN=1h
 COOKIE_MAX_AGE=3600000
 NODE_ENV=development
-
+```
 
 ## Instalación
 
