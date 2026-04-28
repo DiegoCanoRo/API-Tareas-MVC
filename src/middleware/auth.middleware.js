@@ -19,7 +19,7 @@ export const verificarToken = (req, res, next) => {
       return res.status(401).json({ error: 'Token CSRF no proporcionado' });
     }
 
-    // Verificar el token JWT
+    // verificar el token JWT
     const decoded = jwt.verify(tokenJWT, process.env.JWT_SECRET);
     
     // Verificar que el token CSRF coincida con el almacenado en el JWT

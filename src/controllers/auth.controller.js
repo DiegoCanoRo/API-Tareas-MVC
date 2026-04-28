@@ -14,9 +14,7 @@ export const generarTokenCSRF = () => {
  */
 export const login = (req, res) => {
   try {
-    // En un sistema real, aquí validarías credenciales contra una base de datos
-    // Para este ejemplo, asumimos que la API key ya fue validada por el middleware
-    
+
     const { email } = req.body;
     
     if (!email || email.trim() === '') {
@@ -28,7 +26,7 @@ export const login = (req, res) => {
     
     // Crear payload para JWT
     const payload = {
-      id: 1, // En producción, esto vendría de la base de datos
+      id: 1, 
       email: email.trim(),
       apiKey: process.env.API_KEY,
       csrfToken: csrfToken
@@ -44,7 +42,7 @@ export const login = (req, res) => {
     // Configurar cookie HTTP-Only para el token JWT
     res.cookie('jwt_token', tokenJWT, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // Solo HTTPS en producción
+      secure: process.env.NODE_ENV === 'production', 
       sameSite: 'strict',
       maxAge: parseInt(process.env.COOKIE_MAX_AGE)
     });
@@ -62,7 +60,7 @@ export const login = (req, res) => {
         id: payload.id,
         email: payload.email
       },
-      csrfToken: csrfToken // También devolver en la respuesta para conveniencia
+      csrfToken: csrfToken // También devolver en la respuesta
     });
     
   } catch (error) {

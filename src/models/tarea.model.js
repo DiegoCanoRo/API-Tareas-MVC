@@ -3,7 +3,7 @@
  * Define la estructura de datos 
  */
 
-// Base de datos en memoria (lista de tareas)
+// Base de datos en memoria
 let tareas = [
   { id: 1, titulo: 'Aprender Express', completada: false },
   { id: 2, titulo: 'Implementar MVC', completada: false },

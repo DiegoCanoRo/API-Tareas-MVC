@@ -14,6 +14,16 @@ router.get('/', tareaController.obtenerTodas);
 //GET /api/tareas/buscar?titulo=nombre - Obtener tareas por título
 router.get('/buscar', tareaController.obtenerPorTitulo); // GET /api/tareas/buscar?titulo=express
 
+// Relaciones Directas
+router.get('/persona/:personaId', tareaController.obtenerTareasPorPersona);
+router.get('/tag/:tagId', tareaController.obtenerTareasPorTag);
+
+// Relación Indirecta
+router.get('/personas-por-tag/:tagId', tareaController.obtenerPersonasPorTag);
+
+// Vincular datos
+router.post('/vincular-tag', tareaController.agregarTagATarea);
+
 
 // GET /api/tareas/:id - Obtener una tarea por ID
 router.get('/:id', tareaController.obtenerPorId);

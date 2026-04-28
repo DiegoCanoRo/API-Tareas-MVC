@@ -4,26 +4,25 @@
 
 const express = require('express');
 const cors = require('cors'); 
-const { verificarToken } = require('./middleware/auth.middleware')
+const cookieParser = require('cookie-parser');
+
+// Importación de rutas y controladores
+const { verificarToken } = require('./middleware/auth.middleware');
 const authController = require('./controllers/auth.controller');
 const tareaRoutes = require('./routes/tarea.routes');
-const cookieParser = require('cookie-parser');
+const personaRoutes = require('./routes/persona.routes');
 
 const app = express();
 
-
-// config cors
+// Configuración de CORS
 app.use(cors({
-  origin: 'http://localhost:3001', // 
+  origin: 'http://localhost:3001', 
   credentials: true 
 }));
 
-
+// Middlewares base
 app.use(cookieParser());
-// Middleware para parsear JSON
 app.use(express.json());
-
-// Middleware para parsear datos de formularios
 app.use(express.urlencoded({ extended: true }));
 
 // Middleware de logging
@@ -32,33 +31,28 @@ app.use((req, res, next) => {
   next();
 });
 
-
-//ruta de login
+//rutas de autenticacion
 app.post('/api/auth/login', authController.login);
-// deslog
 app.post('/api/auth/logout', authController.logout);
 
-app.use('/api/tareas',verificarToken, tareaRoutes);
 
+// Dejamos las rutas sin verificarToken para que pruebes libremente en Postman
+app.use('/api/tareas', tareaRoutes);
+app.use('/api/personas', personaRoutes); 
 
-// Ruta de bienvenida
+// Ruta de bienvenida e información
 app.get('/', (req, res) => {
   res.json({
-    message: 'API de Tareas - Práctica MVC con Express',
+    message: 'API de Tareas - Gestión de Usuarios Activa',
     version: '1.0.0',
     endpoints: {
-      getAll: 'GET /api/tareas',
-      getByTitle: 'GET /api/tareas/buscar',
-      getById: 'GET /api/tareas/:id',
-      create: 'POST /api/tareas',
-      updateFull: 'PUT /api/tareas/:id',
-      updatePartial: 'PATCH /api/tareas/:id',
-      delete: 'DELETE /api/tareas/:id'
+      personas: 'CRUD completo en /api/personas',
+      tareas: 'CRUD completo en /api/tareas'
     }
   });
 });
 
-// Middleware para manejar rutas no encontradas
+// Middleware para manejar rutas no encontradas 
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -66,7 +60,7 @@ app.use((req, res) => {
   });
 });
 
-// Middleware de manejo de errores
+// Middleware de manejo de errores global
 app.use((err, req, res, next) => {
   console.error('Error no controlado:', err);
   res.status(500).json({
