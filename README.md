@@ -20,7 +20,7 @@ El sistema implementa una arquitectura de seguridad basada en capas para protege
 * **Validación de API Key**: Se requiere una clave de acceso estática para los procesos iniciales de autenticación.
 * **CORS (Cross-Origin Resource Sharing)**: Configurado para permitir el intercambio de recursos y credenciales únicamente con el origen del frontend autorizado.
 
-### Configuración de Variables de Envrio (.env)
+### Configuración de Variables de Entorno (.env)
 Para el correcto funcionamiento del sistema, es obligatorio contar con un archivo `.env` en la raíz del directorio con los siguientes parámetros:
 
 ```env
@@ -30,6 +30,9 @@ JWT_SECRET=tu_firma_secreta_jwt
 JWT_EXPIRES_IN=1h
 COOKIE_MAX_AGE=3600000
 NODE_ENV=development
+GOOGLE_CLIENT_ID=tu_google_client_id
+GOOGLE_CLIENT_SECRET=tu_google_client_secret
+GOOGLE_CALLBACK_URL=https://localhost:3000/auth/google/callback
 ```
 
 ## Instalación
