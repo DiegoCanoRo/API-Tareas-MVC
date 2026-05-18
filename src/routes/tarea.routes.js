@@ -1,43 +1,29 @@
-/**
- * Rutas de Tareas
- * Define los endpoints de la API
- */
-
 const express = require('express');
 const tareaController = require('../controllers/tarea.controller');
+const { verificarToken, esAdmin } = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
-// GET /api/tareas - Obtener todas las tareas
+// rutas protegidas por token (cualquiera autenticado puede acceder)
+router.use(verificarToken);
+
+// rutas de busqueda avanzadas
+router.get('/buscar/tag-nombre', tareaController.buscarPorNombreTag);
+router.get('/buscar/por-etiquetas', tareaController.buscarPorEtiquetas);
+
+//rutas de admin
+router.get('/admin/usuarios-por-tags', esAdmin, tareaController.adminObtenerUsuariosPorTags);
+router.get('/admin/tareas-por-tags', esAdmin, tareaController.adminObtenerTareasPorTags);
+router.get('/admin/tags-por-usuarios', esAdmin, tareaController.adminObtenerTagsPorUsuarios);
+
+// rutas CRUD
 router.get('/', tareaController.obtenerTodas);
-
-//GET /api/tareas/buscar?titulo=nombre - Obtener tareas por título
-router.get('/buscar', tareaController.obtenerPorTitulo); // GET /api/tareas/buscar?titulo=express
-
-// Relaciones Directas
-router.get('/persona/:personaId', tareaController.obtenerTareasPorPersona);
-router.get('/tag/:tagId', tareaController.obtenerTareasPorTag);
-
-// Relación Indirecta
-router.get('/personas-por-tag/:tagId', tareaController.obtenerPersonasPorTag);
-
-// Vincular datos
-router.post('/vincular-tag', tareaController.agregarTagATarea);
-
-
-// GET /api/tareas/:id - Obtener una tarea por ID
-router.get('/:id', tareaController.obtenerPorId);
-
-// POST /api/tareas - Crear una nueva tarea
 router.post('/', tareaController.crear);
 
-// PUT /api/tareas/:id - Actualizar tarea completamente
-router.put('/:id', tareaController.actualizarCompleta);
-
-// PATCH /api/tareas/:id - Actualizar tarea parcialmente
-router.patch('/:id', tareaController.actualizarParcial);
-
-// DELETE /api/tareas/:id - Eliminar una tarea
+//rutas con param
+router.get('/:id', tareaController.obtenerPorId);
+router.put('/:id', tareaController.actualizar);
+router.patch('/:id', tareaController.actualizar);
 router.delete('/:id', tareaController.eliminar);
 
 module.exports = router;

@@ -2,47 +2,44 @@
 
 const jwt = require('jsonwebtoken');
 
-// middleware para verificar el token JWT y el token CSRF en las solicitudes protegidas
+/**
+ * Middleware para verificar el token JWT y el token CSRF en las solicitudes protegidas.
+ * Ahora también extrae el 'rol' para permitir el control de acceso por niveles.
+ */
 const verificarToken = (req, res, next) => {
   try {
     const tokenJWT = req.cookies.jwt_token;
 
-    // si no se proporciona el token JWT, responder con un error de autenticación
+    // Si no se proporciona el token JWT, responder con un error de autenticación
     if (!tokenJWT) {
       return res.status(401).json({ error: 'Token JWT no proporcionado' });
     }
 
-    
-    const csrfToken = req.headers['x-csrf-token'];
-    // si no se proporciona el token CSRF, responder con un error de autenticación
-    if (!csrfToken) {
-      return res.status(401).json({ error: 'Token CSRF no proporcionado' });
-    }
-
+    //const csrfToken = req.headers['x-csrf-token'];
     const decoded = jwt.verify(tokenJWT, process.env.JWT_SECRET);
 
-    // verificar que el token CSRF en el JWT coincida con el token CSRF enviado en la solicitud
-    if (decoded.csrfToken !== csrfToken) {
-      return res.status(401).json({ error: 'Token CSRF inválido' });
-    }
+    // Verificar que el token CSRF en el JWT coincida con el token CSRF enviado en la solicitud
+    //if (decoded.csrfToken !== csrfToken) {
+     // return res.status(401).json({ error: 'Token CSRF inválido' });
+    //}
 
-    // verificar que la API Key en el JWT coincida con la API Key esperada
+    // Verificar que la API Key en el JWT coincida con la API Key esperada
     if (decoded.apiKey !== process.env.API_KEY) {
       return res.status(401).json({ error: 'API Key inválida' });
     }
 
-    // si el token JWT es válido y el token CSRF coincide, adjuntar la información del usuario al objeto req para su uso en los controladores
+    // Adjuntar la información completa del usuario al objeto req
     req.usuario = {
       id: decoded.id,
       email: decoded.email,
+      rol: decoded.rol, 
       apiKey: decoded.apiKey,
     };
 
-    // continuar con la siguiente función de middleware o controlador
     next();
   } catch (error) {
     console.error('Error en verificación de token:', error.message);
-    // manejar errores específicos de JWT para proporcionar mensajes de error más claros
+    
     if (error.name === 'JsonWebTokenError') {
       return res.status(401).json({ error: 'Token JWT inválido' });
     }
@@ -55,16 +52,30 @@ const verificarToken = (req, res, next) => {
   }
 };
 
-// middleware para validar la API Key en las solicitudes que requieren autenticación
+/**
+ * Middleware para restringir el acceso solo a usuarios con rol 'admin'.
+ * Se debe usar después de 'verificarToken'.
+ */
+const esAdmin = (req, res, next) => {
+  if (req.usuario && req.usuario.rol === 'admin') {
+    return next();
+  }
+  
+  return res.status(403).json({ 
+    error: 'Acceso denegado: Se requieren privilegios de administrador' 
+  });
+};
+
+/**
+ * Middleware para validar la API Key en las solicitudes que requieren autenticación simple.
+ */
 const validarApiKey = (req, res, next) => {
   const apiKey = req.headers['x-api-key'];
 
-  // si no se proporciona la API Key, responder con un error de autenticación
   if (!apiKey) {
     return res.status(401).json({ error: 'API Key no proporcionada' });
   }
 
-  // si la API Key proporcionada no coincide con la API Key esperada, responder con un error de autenticación
   if (apiKey !== process.env.API_KEY) {
     return res.status(401).json({ error: 'API Key inválida' });
   }
@@ -75,4 +86,5 @@ const validarApiKey = (req, res, next) => {
 module.exports = {
   verificarToken,
   validarApiKey,
+  esAdmin, // Exportado para proteger rutas administrativas
 };

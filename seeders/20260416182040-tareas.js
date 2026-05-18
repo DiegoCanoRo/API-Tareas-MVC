@@ -3,6 +3,9 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
+    await queryInterface.bulkDelete('Tareas', null, {});
+
+    //nsertar los registros
     await queryInterface.bulkInsert('Tareas', [
       { 
         id: 1, 
@@ -10,7 +13,7 @@ module.exports = {
         descripcion: 'Ir al súper por leche deslactosada', 
         categoria: 'Compras', 
         completada: false, 
-        personaId: 1, // Juan
+        personaId: 1, // Diego
         createdAt: new Date(), 
         updatedAt: new Date() 
       },

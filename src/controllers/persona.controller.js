@@ -1,8 +1,18 @@
-const { Persona } = require('../../models');
+const { Persona, Usuario } = require('../../models');
 
-//registro de usuario
+const listar = async (req, res) => {
+    try {
+        const personas = await Persona.findAll(); 
+        res.json({ success: true, data: personas });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+// Registro de usuario
 const registrar = async (req, res) => {
     try {
+        
         const nuevaPersona = await Persona.create(req.body);
         res.status(201).json({ success: true, data: nuevaPersona });
     } catch (error) {
@@ -10,16 +20,23 @@ const registrar = async (req, res) => {
     }
 };
 
-//modificación
+// Modificación
 const modificar = async (req, res) => {
     try {
         const { id } = req.params;
-        // Validaciones robustas manuales
-        if (req.body.nombre && req.body.nombre.length < 2) {
-            return res.status(400).json({ message: "Nombre demasiado corto" });
+        let datosAActualizar = { ...req.body };
+
+        // Si la contraseña viene vacía desde el frontend (porque el admin no quiso cambiarla),
+        // la eliminamos del objeto para que no se guarde como un texto vacío.
+        if (!datosAActualizar.password || datosAActualizar.password.trim() === '') {
+            delete datosAActualizar.password;
         }
+
+        const [updated] = await Persona.update(datosAActualizar, { 
+            where: { id },
+            individualHooks: true 
+        });
         
-        const [updated] = await Persona.update(req.body, { where: { id } });
         if (!updated) return res.status(404).json({ message: "Usuario no encontrado" });
         
         const usuario = await Persona.findByPk(id);
@@ -29,7 +46,7 @@ const modificar = async (req, res) => {
     }
 };
 
-//desactivacipon del usuario
+// Desactivación del usuario
 const desactivar = async (req, res) => {
     try {
         await Persona.update({ activo: false }, { where: { id: req.params.id } });
@@ -39,7 +56,7 @@ const desactivar = async (req, res) => {
     }
 };
 
-//activación del usuario
+// Activación del usuario
 const activar = async (req, res) => {
     try {
         await Persona.update({ activo: true }, { where: { id: req.params.id } });
@@ -49,7 +66,7 @@ const activar = async (req, res) => {
     }
 };
 
-// eliminación fisica del usuario
+// Eliminación física del usuario
 const eliminarFisica = async (req, res) => {
     try {
         const borrado = await Persona.destroy({ where: { id: req.params.id } });
@@ -60,4 +77,4 @@ const eliminarFisica = async (req, res) => {
     }
 };
 
-module.exports = { registrar, modificar, desactivar, activar, eliminarFisica };
+module.exports = { registrar, modificar, desactivar, activar, eliminarFisica, listar };

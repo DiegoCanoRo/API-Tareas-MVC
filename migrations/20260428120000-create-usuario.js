@@ -27,6 +27,11 @@ module.exports = {
         allowNull: false,
         defaultValue: 'google',
       },
+      rol: {
+      type: Sequelize.ENUM('admin', 'user'),
+      allowNull: false,
+      defaultValue: 'user'
+      },
       avatar: {
         type: Sequelize.STRING,
         allowNull: true,

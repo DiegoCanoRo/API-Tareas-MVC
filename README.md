@@ -8,18 +8,23 @@ La API permite realizar operaciones CRUD sobre tareas utilizando una lista en me
 
 Los datos se intercambian en formato **JSON** mediante diferentes endpoints que permiten crear, consultar, actualizar y eliminar tareas.
 
+El sistema utiliza una base de datos relacional para garantizar la integridad de la información:
+
+* **Base de Datos**: MariaDB / MySQL.
+* **ORM**: Sequelize para la definición de modelos y migraciones automáticas.
+* **Unificación de Identidad**: Gestión centralizada de perfiles y credenciales en una tabla única (`usuarios`), permitiendo que una `Persona` sea a la vez un usuario del sistema.
+* **Relaciones**: Soporte para asociaciones Muchos a Muchos (Tags-Tareas) y Uno a Muchos (Usuarios-Tareas).
 
 ## Seguridad y Autenticación
 
-El sistema implementa una arquitectura de seguridad basada en capas para proteger los datos y la sesión del usuario.
+La API implementa múltiples capas de seguridad para proteger los recursos:
 
-### Tecnologías de Seguridad Implementadas:
-* **JWT (JSON Web Tokens)**: Utilizado para la autenticación de sesiones. El token se firma en el servidor y se almacena en el cliente.
-* **Cookies HTTP-Only**: El token JWT se envía mediante una cookie con el atributo `httpOnly: true`, lo que impide que scripts maliciosos de terceros accedan al token (protección contra XSS).
-* **Protección CSRF (Cross-Site Request Forgery)**: Se utiliza una estrategia de doble token. Además del JWT, se genera un token CSRF aleatorio que el cliente debe enviar en los encabezados de cada petición protegida (`x-csrf-token`).
-* **Validación de API Key**: Se requiere una clave de acceso estática para los procesos iniciales de autenticación.
-* **CORS (Cross-Origin Resource Sharing)**: Configurado para permitir el intercambio de recursos y credenciales únicamente con el origen del frontend autorizado.
-
+* **JWT (JSON Web Tokens)**: Autenticación basada en tokens firmados.
+* **Cookies HTTP-Only**: Almacenamiento seguro del JWT para mitigar ataques XSS.
+* **RBAC (Control de Acceso Basado en Roles)**: Middleware especializado para restringir rutas de administración solo a usuarios con el rol `admin`.
+* **Google OAuth 2.0**: Integración con Passport.js para login social.
+* **Bcrypt**: Encriptación de contraseñas mediante hooks de Sequelize antes de la persistencia.
+* **API Key**: Validación de cabecera `x-api-key` para asegurar que las peticiones provienen de clientes autorizados.
 ### Configuración de Variables de Entorno (.env)
 Para el correcto funcionamiento del sistema, es obligatorio contar con un archivo `.env` en la raíz del directorio con los siguientes parámetros:
 
@@ -76,26 +81,3 @@ PATCH /api/tareas/:id
 DELETE /api/tareas/:id
 
 
-## Obtener todas
-![Obtener todas](./screenshots/getall.png)
-
-## Obtener por título
-![Obtener por título](./screenshots/titulo.png)
-
-## Obtener por ID
-![Obtener por ID](./screenshots/getid.png)
-
-## Crear tarea
-![Crear tarea](./screenshots/creartarea.png)
-
-## Actualizar tarea
-![Actualizar tarea](./screenshots/actualizarTarea.png)
-
-## Actualizar tarea parcialmente
-![Actualizar tarea parcialmente](./screenshots/actualizarTarea.png)
-
-## Eliminar tarea
-![Eliminar tarea](./screenshots/eliminarTarea.png)
-
-## Obtener en formato de texto
-![Obtener en formato de texto](./screenshots/formatoText.png)

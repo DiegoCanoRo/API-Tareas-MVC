@@ -4,23 +4,27 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const passport = require('passport');
+const jwt = require('jsonwebtoken');
 
 // Configurar Passport Google OAuth
 const configurePassport = require('./passport');
 const googleOAuthReady = configurePassport();
 
-// Importación de rutas y controladores
+// Importación de middlewares de seguridad
 const { verificarToken } = require('./middleware/auth.middleware');
+
+// Importación de rutas
 const authController = require('./controllers/auth.controller');
 const googleAuthRoutes = require('./routes/auth.routes');
 const tareaRoutes = require('./routes/tarea.routes');
 const personaRoutes = require('./routes/persona.routes');
-
+const adminRoutes = require('./routes/admin.routes'); 
+const tagRoutes = require('./routes/tag.routes');
 const app = express();
 
 // Configuración de CORS
 app.use(cors({
-  origin: 'http://localhost:3001',
+  origin: 'http://localhost:5173',
   credentials: true,
 }));
 
@@ -36,42 +40,52 @@ app.use((req, res, next) => {
   next();
 });
 
-// Rutas de autenticación
+
+// Google OAuth
 if (googleOAuthReady) {
   app.use('/auth', googleAuthRoutes);
 } else {
-  app.get('/auth/google/login', (req, res) => {
+  const oauthError = (req, res) => {
     res.status(503).json({
       success: false,
-      message: 'Google OAuth no está configurado. Revisa GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET y GOOGLE_CALLBACK_URL en tu archivo .env.',
+      message: 'Google OAuth no está configurado. Revisa el archivo .env',
     });
-  });
-
-  app.get('/auth/google/callback', (req, res) => {
-    res.status(503).json({
-      success: false,
-      message: 'Google OAuth no está configurado. Revisa GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET y GOOGLE_CALLBACK_URL en tu archivo .env.',
-    });
-  });
+  };
+  app.get('/auth/google/login', oauthError);
+  app.get('/auth/google/callback', oauthError);
 }
 
+// Auth Tradicional y Verificación
 app.post('/api/auth/login', authController.login);
 app.post('/api/auth/logout', authController.logout);
+app.get('/api/auth/verify', verificarToken, authController.verificarAuth);
 
-// Dejamos las rutas sin verificarToken para que pruebes libremente en Postman
+//rutas del api
+
+// el middleware de seguridad ya está dentro de tareaRoutes
 app.use('/api/tareas', tareaRoutes);
+
+// gestión de usuarios y búsquedas avanzadas
+app.use('/api/admin', adminRoutes);
+
+
 app.use('/api/personas', personaRoutes);
 
-// Ruta de bienvenida e información
+app.use('/api/tags', tagRoutes);
+
+/**
+ * manejo de errores y etsados
+ */
+
+// Ruta de bienvenida
 app.get('/', (req, res) => {
   res.json({
-    message: 'API de Tareas - Gestión de Usuarios Activa',
-    version: '1.0.0',
+    message: 'API de Tareas - Gestión de Usuarios y Roles Activa',
+    version: '1.1.0',
     endpoints: {
-      personas: 'CRUD completo en /api/personas',
-      tareas: 'CRUD completo en /api/tareas',
-      googleAuthLogin: '/auth/google/login',
-      googleAuthCallback: '/auth/google/callback',
+      auth: '/api/auth',
+      tareas: '/api/tareas',
+      admin: '/api/admin (Solo Admin)',
     },
   });
 });

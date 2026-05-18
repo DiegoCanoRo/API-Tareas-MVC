@@ -2,80 +2,100 @@
 
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const { Usuario } = require('../../models'); 
 
-// generar un token CSRF aleatorio
 const generarTokenCSRF = () => crypto.randomBytes(32).toString('hex');
 
 const COOKIE_MAX_AGE = parseInt(process.env.COOKIE_MAX_AGE, 10) || 24 * 60 * 60 * 1000;
-const isProduction = process.env.NODE_ENV === 'production';
 
-// Opciones de cookie para JWT
 const buildCookieOptions = () => ({
-  httpOnly: true,
-  secure: isProduction,
-  sameSite: 'strict',
+  httpOnly: false, 
+  secure: true,
+  sameSite: 'none',
   maxAge: COOKIE_MAX_AGE,
 });
 
-// controlador para manejar el login tradicional con email (sin Google)
-const login = (req, res) => {
+const buildCSRFCookieOptions = () => ({
+  secure: true,
+  sameSite: 'none',
+  maxAge: COOKIE_MAX_AGE,
+});
+
+const login = async (req, res) => { 
   try {
-    const { email } = req.body;
+    // extraemos email y password del cuerpo de la petición
+    const { email, password } = req.body;
 
     if (!email || email.trim() === '') {
       return res.status(400).json({ error: 'El email es requerido' });
     }
 
+    if (!password) {
+      return res.status(400).json({ error: 'La contraseña es requerida' });
+    }
+
+    // BUSCAR EL USUARIO EN LA BASE DE DATOS
+    const usuarioEncontrado = await Usuario.findOne({ 
+      where: { email: email.trim() } 
+    });
+
+    if (!usuarioEncontrado) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    // VERIFICACIÓN DE CONTRASEÑA
+    // Primero revisamos si el usuario tiene una contraseña (por si es de Google)
+    if (!usuarioEncontrado.password) {
+      return res.status(401).json({ 
+        error: 'Este usuario no tiene contraseña configurada. Intente iniciar sesión con Google.' 
+      });
+    }
+
+    // Usamos el método que creamos en el modelo Usuario
+    const passwordEsValida = usuarioEncontrado.validPassword(password);
+    if (!passwordEsValida) {
+      return res.status(401).json({ error: 'Contraseña incorrecta' });
+    }
+
+    // generamos el token CSRF
     const csrfToken = generarTokenCSRF();
 
-    // crear el payload para el token JWT con la información del usuario
     const payload = {
-      id: 1,
-      email: email.trim(),
+      id: usuarioEncontrado.id,
+      email: usuarioEncontrado.email,
+      rol: usuarioEncontrado.rol, 
       apiKey: process.env.API_KEY,
       csrfToken,
     };
 
-    // generar el token JWT con el payload y la clave secreta
     const tokenJWT = jwt.sign(payload, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRES_IN,
     });
 
-    // configurar las cookies para el token JWT y el token CSRF
+    // CONFIGURACIÓN DE COOKIES Y RESPUESTA
     res.cookie('jwt_token', tokenJWT, buildCookieOptions());
+    res.cookie('csrf_token', csrfToken, buildCSRFCookieOptions());
 
-    res.cookie('csrf_token', csrfToken, {
-      secure: isProduction,
-      sameSite: 'strict',
-      maxAge: COOKIE_MAX_AGE,
-    });
-
-    // responder con la información del usuario autenticado y un mensaje de exito
     res.json({
       mensaje: 'Login exitoso',
       usuario: {
-        id: payload.id,
-        email: payload.email,
+        id: usuarioEncontrado.id,
+        email: usuarioEncontrado.email,
+        rol: usuarioEncontrado.rol
       },
       csrfToken,
     });
-    // si no se pudo procesar el login, responder con un error
+
   } catch (error) {
     console.error('Error en login:', error);
     res.status(500).json({ error: 'Error en el proceso de login' });
   }
 };
 
-// controlador para manejar el logout
 const logout = (req, res) => {
   try {
-    // limpiar las cookies de JWT y CSRF para cerrar la sesión
     res.clearCookie('jwt_token', buildCookieOptions());
-    res.clearCookie('csrf_token', {
-      secure: isProduction,
-      sameSite: 'strict',
-    });
-
+    res.clearCookie('csrf_token', buildCSRFCookieOptions());
     res.json({ mensaje: 'Logout exitoso' });
   } catch (error) {
     console.error('Error en logout:', error);
@@ -83,10 +103,9 @@ const logout = (req, res) => {
   }
 };
 
-// controlador para verificar si el usuario está autenticado
+// Endpoint para verificar si el usuario está autenticado y obtener su información
 const verificarAuth = (req, res) => {
   try {
-    // si llegamos aquí, el middleware de verificación de token ya ha validado el JWT y el CSRF
     res.json({
       autenticado: true,
       usuario: req.usuario,
